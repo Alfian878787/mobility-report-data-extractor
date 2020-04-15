@@ -11,6 +11,7 @@ import mobius
 
 BUCKET = "mobility-reports"
 
+
 def get(filetype="SVG", regex="\d{4}-\d{2}-\d{2}_.+"):
     client = Client.create_anonymous_client()
     blobs = filter(
@@ -59,7 +60,6 @@ def show(filetype, date):
                     else country_name[:MAXLEN_COUNTRY]
                 )
 
-
                 iteration = str(i + 1)
                 iteration = (
                     iteration
@@ -93,7 +93,6 @@ def show(filetype, date):
                 else (" " * (3 - len(iteration)) + iteration)
             )
             print(f" {iteration}. {country} {country_name}  {pdf_date}   ({url_prefix + blob.name})")
-
 
 
 @click.group(help="Downloader and processor for Google mobility reports")
@@ -154,14 +153,8 @@ def download(country_code, date):
                 )
                 download_count += 1
 
-
-
         if download_count == 0:
             print(f"Could not find a {extension} file for code {country_code}")
-
-        
-
-
 
     regex = f"\d{{4}}-\d{{2}}-\d{{2}}_{country_code}_M.+"
 
@@ -215,15 +208,15 @@ def summary(input_pdf, output_folder, dates_file):
 @click.argument("INPUT_PDF", type=click.Path(exists=True))
 @click.argument("INPUT_SVG", type=click.Path(exists=True))
 @click.argument("OUTPUT_FOLDER")
-@click.argument("DATES_FILE")
-def full(input_pdf, input_svg, output_folder, dates_file):
+def full(input_pdf, input_svg, output_folder):
 
     with mobius.io.open_document(input_pdf) as doc:
-        summary_df = mobius.extraction.summarise(doc, dates_file)
+        summary_df = mobius.extraction.summarise(doc)
 
     data = mobius.graphs.graph_process(input_svg, None, False)
 
-    date_lookup_df = mobius.io.read_dates_lookup(dates_file)
+    # TODO don't load it, create it
+    date_lookup_df = mobius.extraction.create_date_lookup(summary_df)
 
     svg_df = mobius.csv.process_all(data, date_lookup_df)
 
